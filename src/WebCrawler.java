@@ -1,21 +1,24 @@
 import org.jsoup.Jsoup;
-import org.jsoup.helper.Validate;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import java.io.IOException;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 public class WebCrawler implements Runnable {
-	private final String url;
-	Document doc;
-	Elements links;
-	Elements media;
-	Elements imports;
+	private String url;
+	private Document doc;
+	private Elements links;
+	private Elements media;
+	private Elements imports;
+	BlockingQueue <String> SharedUrlPool = new ArrayBlockingQueue<String>(10);
+	private String name;
 	
 
-	public WebCrawler ( String url ){
-		this.url = url;
-		connectToUrl();
+	public WebCrawler ( BlockingQueue <String> SharedUrlPool, String name ){
+		this.SharedUrlPool = SharedUrlPool;
+		this.name = name;
 	}
 	
 	public void connectToUrl () {
@@ -32,30 +35,31 @@ public class WebCrawler implements Runnable {
 	@Override
 	public void run() {
 		
-		// SCRAPE Directly from jSoup docs
-		// this scraped content can be stored in a DB rather than printed
-		
-        Utils.print("Media: (%d)", media.size());
-        for (Element src : media) {
-            if (src.tagName().equals("img"))
-            	Utils.print(" * %s: <%s> %sx%s (%s)",
-                        src.tagName(), src.attr("abs:src"), src.attr("width"), src.attr("height"),
-                        Utils.trim(src.attr("alt"), 20));
-            else
-            	Utils.print(" * %s: <%s>", src.tagName(), src.attr("abs:src"));
-        }
+		while ( SharedUrlPool.size() != 0 ){
+			this.url  = SharedUrlPool.poll();
+			connectToUrl();
+	        
+			System.out.println(name);
+			Utils.print("Media: (%d)", media.size());
+	        for (Element src : media) {
+	            if (src.tagName().equals("img"))
+	            	Utils.print(" * %s: <%s> %sx%s (%s)",
+	                        src.tagName(), src.attr("abs:src"), src.attr("width"), src.attr("height"),
+	                        Utils.trim(src.attr("alt"), 20));
+	            else
+	            	Utils.print(" * %s: <%s>", src.tagName(), src.attr("abs:src"));
+	        }
 
-        Utils.print("\nImports: (%d)", imports.size());
-        for (Element link : imports) {
-        	Utils.print(" * %s <%s> (%s)", link.tagName(),link.attr("abs:href"), link.attr("rel"));
-        }
+	        Utils.print("\nImports: (%d)", imports.size());
+	        for (Element link : imports) {
+	        	Utils.print(" * %s <%s> (%s)", link.tagName(),link.attr("abs:href"), link.attr("rel"));
+	        }
 
-        Utils.print("\nLinks: (%d)", links.size());
-        for (Element link : links) {
-            Utils.print(" * a: <%s>  (%s)", link.attr("abs:href"), Utils.trim(link.text(), 35));
-        }
-		
-		
-	}
-
+	        Utils.print("\nLinks: (%d)", links.size());
+	        for (Element link : links) {
+	            Utils.print(" * a: <%s>  (%s)", link.attr("abs:href"), Utils.trim(link.text(), 35));
+	        }   
+		}
+		System.out.println( name + " is exiting" );
+	}//end run
 }

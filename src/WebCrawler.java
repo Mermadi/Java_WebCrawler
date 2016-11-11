@@ -1,4 +1,5 @@
 import org.jsoup.Jsoup;
+import java.sql.*;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -6,7 +7,6 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
-
 
 public class WebCrawler implements Runnable {
 	private String element [];
@@ -20,15 +20,16 @@ public class WebCrawler implements Runnable {
     Set < String > urlsVisited = new HashSet <String > ( 100 );
 	private String name;
 	public static int urlCount = 1;
-	
+	Connection conn; 
 
 	public WebCrawler ( LinkedBlockingQueue <String []> SharedUrlPool, String name, Set < String > urlsVisited ){
 		this.SharedUrlPool = SharedUrlPool;
 		this.urlsVisited = urlsVisited;
 		this.name = name;
-		System.out.println( name + " started..." );
+		this.conn = Utils.connectDatabase(); 
+		System.out.println( name + " started and connected to database" );
 	}
-	
+
 	public boolean connectToUrl ( String url) {
 		boolean success;
 		if ( url != null ) {
@@ -48,10 +49,8 @@ public class WebCrawler implements Runnable {
 		return success;
 	}
 	
-
 	@Override
 	public void run() {
-		
 		while ( urlsVisited.size() <= 95){
 			if (!SharedUrlPool.isEmpty()) {
 				try {
@@ -89,6 +88,7 @@ public class WebCrawler implements Runnable {
 			        	System.out.print("LAYER:  " + newLayer );
 			            Utils.print("  * a: <%s>  (%s)", link.attr("abs:href"), Utils.trim(link.text(), 35));
 			            String element []= { link.attr( "abs:href" ), ( ""+ newLayer ) };
+			            Utils.writeToDatabase( conn, this.url, link.attr( "abs:href" ), ( ""+newLayer ));
 			            
 			            if ( !urlsVisited.contains( element[0] ) ){
 			            	 SharedUrlPool.offer( element );
@@ -96,11 +96,6 @@ public class WebCrawler implements Runnable {
 			        }
 			        urlCount++;
 		            urlsVisited.add(this.url); 
-		            int count = 1;
-		            for ( String s : urlsVisited){
-		            	System.out.println(count+ ", " +s);
-		            	count++;
-		            }
 				}
 			} else {
 				try {

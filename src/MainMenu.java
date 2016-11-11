@@ -1,6 +1,6 @@
 import java.awt.EventQueue;
-
 import javax.swing.JFrame;
+import javax.swing.UIManager;
 import javax.swing.JButton;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
@@ -13,6 +13,7 @@ public class MainMenu {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
+		            UIManager.setLookAndFeel("com.jtattoo.plaf.noire.NoireLookAndFeel");
 					MainMenu window = new MainMenu();
 					window.frame.setVisible(true);
 				} catch (Exception e) {
@@ -31,8 +32,15 @@ public class MainMenu {
 		frame.setBounds(100, 100, 162, 94);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.getContentPane().setLayout(null);
+	    frame.setLocationRelativeTo(null);
 		
 		JButton btnNewButton = new JButton("Search");
+		btnNewButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				SearchDisplay cd = new SearchDisplay();
+				cd.SearchScreen();
+			}
+		});
 		btnNewButton.setBounds(22, 6, 117, 29);
 		frame.getContentPane().add(btnNewButton);
 		
@@ -40,8 +48,7 @@ public class MainMenu {
 		button.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				CrawlDisplay cd = new CrawlDisplay();
-				cd.CrawlScreen();
-				
+				cd.CrawlScreen();				
 			}
 		});
 		button.setBounds(22, 37, 117, 29);

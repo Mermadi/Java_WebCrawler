@@ -7,7 +7,7 @@ public class Utils {
 	private static final String JDBC_DRIVER = "com.mysql.jdbc.Driver";  
 	private static final String DB_URL = "jdbc:mysql://localhost/crawledInfo?useSSL=false";
 	private static final String USER = "agodinez";
-	private static final String PASS = "*******";
+	private static final String PASS = "SecretPassword";
 	static int numConnections = 0;
 
 	// format string url

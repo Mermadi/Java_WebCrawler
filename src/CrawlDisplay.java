@@ -48,6 +48,7 @@ public class CrawlDisplay {
 				createCrawlers();
 				String url = UrlsTextField.getText().trim();
 				pool.insertURL(url);
+				WebCrawler.urlCount = 1;
 				System.out.println(url +" add to queue");
 				UrlsTextField.setText("");		
 			}

@@ -69,18 +69,22 @@ public class WebCrawler implements Runnable {
 					System.out.println(name);
 					Utils.print("Media: (%d)", media.size());
 			        for (Element src : media) {
-			            if (src.tagName().equals("img"))
+			            if (src.tagName().equals("img")) {
 			            	Utils.print("LAYER:  " + newLayer+ "  * %s: <%s> %sx%s (%s)",
 			                        src.tagName(), src.attr("abs:src"), src.attr("width"), src.attr("height"),
 			                        Utils.trim(src.attr("alt"), 20));
-			            else
+			        		//Utils.writeToDatabase( conn, this.url, Utils.trim(src.attr("alt"),20), ( ""+newLayer ));
+
+			            } else {
 			            	Utils.print(" * %s: <%s>", src.tagName(), src.attr("abs:src"));
+			            }
 			        }
 		
 			        Utils.print("\nImports: (%d)", imports.size());
 			        for (Element link : imports) {
 			        	System.out.print("LAYER:  " + newLayer );
 			        	Utils.print("  * %s <%s> (%s)", link.tagName(),link.attr("abs:href"), link.attr("rel"));
+			        	//Utils.writeToDatabase( conn, this.url, link.attr( "abs:href" ), ( ""+newLayer ));
 			        }
 		
 			        Utils.print("\nLinks: (%d)", links.size());

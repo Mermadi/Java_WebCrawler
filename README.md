@@ -3,11 +3,11 @@
 1. Java 8
 2. MySQL
 3. Add JARs listed below to your build path
-- jsoup-1.10.1.jar ( HTML Parser )
-- rs2xml.jar ( ResultSets to JTable )
-- mysql-connector-java-5.1.40-bin.jar ( MySQL Driver )
+	- jsoup-1.10.1.jar ( HTML Parser )
+	- rs2xml.jar ( ResultSets to JTable )
+	- mysql-connector-java-5.1.40-bin.jar ( MySQL Driver )
 
-## Getting Running
+## Get Running
 
 1. Download and unzip this repo or git clone 
 
@@ -18,14 +18,11 @@
         $ mysql -u yourUsername -p
         $ CREATE DATABASE crawledInfo;
         $ USE crawledInfo;
-        $ CREATE TABLE scraped ( url VARCHAR(300), links VARCHAR (300), layer VARCHAR(5) );
+        $ CREATE TABLE scraped (url VARCHAR(500), links VARCHAR (500), imports VARCHAR (500), media VARCHAR (500), layer VARCHAR(5));
 
-3. Set up and Run:
+4. Compile and run:
 
-        $ make build     # creates db and migrates allauth data
-        $ python manage.py migrate #migrates polls app data
-        $ make run         # starts the development server
-
-## Credits
-
-Credits go here 
+        $ cd Java_WebCrawler/src/
+        $ Make DB cred changes to Utils.java
+        $ javac *.java
+        $ java MainMenu

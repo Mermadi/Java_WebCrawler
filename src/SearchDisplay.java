@@ -16,7 +16,9 @@ public class SearchDisplay {
 
 	private JFrame frame;
 	CrawlPool pool;
-	private JTable table;
+	private JTable tableLinks;
+	private JTable tableMedia;
+	private JTable tableImports;
 	Connection conn;
 
 	public void SearchScreen() {
@@ -39,22 +41,36 @@ public class SearchDisplay {
 
 	private void initialize() {
 		frame = new JFrame("Searcher");
-		frame.setBounds(100, 100, 722, 399);
+		frame.setBounds(100, 100, 845, 399);
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		frame.getContentPane().setLayout(null);
 	    frame.setLocationRelativeTo(null);
 
-		JScrollPane scrollPane = new JScrollPane();
-		scrollPane.setBounds(81, 105, 588, 246);
-		frame.getContentPane().add(scrollPane);
+		JScrollPane scrollPaneLinks = new JScrollPane();
+		scrollPaneLinks.setBounds(30, 105, 253, 246);
+		frame.getContentPane().add(scrollPaneLinks);
 		
-		table = new JTable();
-		scrollPane.setViewportView(table);
+		JScrollPane scrollPaneMedia = new JScrollPane();
+		scrollPaneMedia.setBounds(295, 105, 253, 246);
+		frame.getContentPane().add(scrollPaneMedia);
+		
+		JScrollPane scrollPaneImports = new JScrollPane();
+		scrollPaneImports.setBounds(560, 105, 253, 246);
+		frame.getContentPane().add(scrollPaneImports);
+		
+		tableLinks = new JTable();
+		scrollPaneLinks.setViewportView(tableLinks);
+		
+		tableMedia = new JTable();
+		scrollPaneMedia.setViewportView(tableMedia);
+		
+		tableImports = new JTable();
+		scrollPaneImports.setViewportView(tableImports);
 		
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		JComboBox comboBox = new JComboBox ( Utils.getScrapedUrls(conn).toArray() );
 		comboBox.setEditable(true);
-		comboBox.setBounds(81, 31, 459, 27);
+		comboBox.setBounds(30, 30, 459, 27);
 		frame.getContentPane().add(comboBox);
 		comboBox.setSelectedItem("");
 		
@@ -62,20 +78,26 @@ public class SearchDisplay {
 		btnNewButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				String url = (String) comboBox.getSelectedItem();
-				comboBox.setSelectedItem("");
-				ResultSet rs = Utils.search ( conn, url);
-			    table.setModel(DbUtils.resultSetToTableModel(rs));
+				ResultSet  rsLinks = Utils.search ( conn, url, "links" );
+				tableLinks.setModel(DbUtils.resultSetToTableModel(rsLinks));
+				
+				ResultSet  rsMedia = Utils.search ( conn, url, "media" );
+				tableMedia.setModel(DbUtils.resultSetToTableModel(rsMedia));
+				
+				ResultSet  rsImports = Utils.search ( conn, url, "imports" );
+				tableImports.setModel(DbUtils.resultSetToTableModel(rsImports));
 			}
 		});
-		btnNewButton.setBounds(552, 29, 117, 30);
+		btnNewButton.setBounds(501, 29, 117, 30);
 		frame.getContentPane().add(btnNewButton);
 		
 		JLabel lblResults = new JLabel("Results");
-		lblResults.setBounds(81, 77, 61, 16);
+		lblResults.setBounds(30, 77, 61, 16);
 		frame.getContentPane().add(lblResults);
 		
 		JSeparator separator = new JSeparator();
-		separator.setBounds(132, 81, 537, 12);
+		separator.setBounds(81, 81, 731, 12);
 		frame.getContentPane().add(separator);
+		
 	}	
 }

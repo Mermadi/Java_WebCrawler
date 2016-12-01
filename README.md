@@ -3,13 +3,13 @@
 1. Java 8
 2. MySQL
 3. Add JARs listed below to your build path
-
-- jsoup-1.10.1.jar
-- mysql-connector-java-5.1.40-bin.jar
+- jsoup-1.10.1.jar ( HTML Parser )
+- rs2xml.jar ( ResultSets to JTable )
+- mysql-connector-java-5.1.40-bin.jar ( MySQL Driver )
 
 ## Getting Running
 
-1. Download and unzip this repo or git clone
+1. Download and unzip this repo or git clone 
 
 2. Start MySQL server 
 

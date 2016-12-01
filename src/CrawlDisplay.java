@@ -9,6 +9,7 @@ import java.beans.PropertyChangeListener;
 import java.awt.event.ActionEvent;
 import javax.swing.JProgressBar;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 
 public class CrawlDisplay {
 
@@ -69,6 +70,9 @@ public class CrawlDisplay {
 						String name = evt.getPropertyName();
                         if (name.equals("progress")) {
                             int progress = (int) evt.getNewValue();
+                            if ( progress >= 100 ){
+                         	   JOptionPane.showMessageDialog(frame, "Scrape Complete");
+                            }
                             progressBar.setValue(progress);
                             progressBar.repaint();
                         } 
@@ -100,9 +104,8 @@ public class CrawlDisplay {
     public class ProgressWorker extends SwingWorker<Object, Object> {
         @Override
         protected Object doInBackground() throws Exception {
-        	   while ( WebCrawler.urlCount < 100 ) {        
+        	   while ( WebCrawler.urlCount <= 100 ) {        
                    setProgress( WebCrawler.urlCount );
-                   System.out.println( "*******" + WebCrawler.urlCount );
                    try {
                        Thread.sleep( 45 );
                    } catch ( Exception e ) {

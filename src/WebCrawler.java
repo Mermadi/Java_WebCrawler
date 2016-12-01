@@ -17,9 +17,10 @@ public class WebCrawler implements Runnable {
 	private Elements media;
 	private Elements imports;
 	LinkedBlockingQueue < String [] > SharedUrlPool = new LinkedBlockingQueue< String [] >( 100 );
-    Set < String > urlsVisited = new HashSet <String > ( 100 );
+    Set < String > urlsVisited = new HashSet < String > ( 100 );
 	private String name;
 	public static int urlCount = 1;
+	public static int exit = 0;
 	Connection conn; 
 
 	public WebCrawler ( LinkedBlockingQueue <String []> SharedUrlPool, String name, Set < String > urlsVisited ){
@@ -42,6 +43,9 @@ public class WebCrawler implements Runnable {
 			} catch (IOException e) {
 				e.getMessage();
 				success = false;
+			} catch ( IllegalArgumentException e) {
+				System.out.println("skipping " + url);
+				success = true;
 			}
 		} else {
 			success = false;
@@ -71,9 +75,9 @@ public class WebCrawler implements Runnable {
 			        for (Element src : media) {
 			            if (src.tagName().equals("img")) {
 			            	Utils.print("LAYER:  " + newLayer+ "  * %s: <%s> %sx%s (%s)",
-			                        src.tagName(), src.attr("abs:src"), src.attr("width"), src.attr("height"),
-			                        Utils.trim(src.attr("alt"), 20));
-			        		//Utils.writeToDatabase( conn, this.url, Utils.trim(src.attr("alt"),20), ( ""+newLayer ));
+			                src.tagName(), src.attr("abs:src"), src.attr("width"), src.attr("height"),
+			                Utils.trim(src.attr("alt"), 20));
+			        		Utils.writeToDatabase( conn, this.url, src.attr("src"), ( ""+newLayer ), "media");
 
 			            } else {
 			            	Utils.print(" * %s: <%s>", src.tagName(), src.attr("abs:src"));
@@ -84,7 +88,7 @@ public class WebCrawler implements Runnable {
 			        for (Element link : imports) {
 			        	System.out.print("LAYER:  " + newLayer );
 			        	Utils.print("  * %s <%s> (%s)", link.tagName(),link.attr("abs:href"), link.attr("rel"));
-			        	//Utils.writeToDatabase( conn, this.url, link.attr( "abs:href" ), ( ""+newLayer ));
+			        	Utils.writeToDatabase( conn, this.url, link.attr( "abs:href" ), ( ""+newLayer ), "imports");
 			        }
 		
 			        Utils.print("\nLinks: (%d)", links.size());
@@ -92,14 +96,16 @@ public class WebCrawler implements Runnable {
 			        	System.out.print("LAYER:  " + newLayer );
 			            Utils.print("  * a: <%s>  (%s)", link.attr("abs:href"), Utils.trim(link.text(), 35));
 			            String element []= { link.attr( "abs:href" ), ( ""+ newLayer ) };
-			            Utils.writeToDatabase( conn, this.url, link.attr( "abs:href" ), ( ""+newLayer ));
+			            Utils.writeToDatabase( conn, this.url, link.attr( "abs:href" ), ( ""+newLayer ), "links");
 			            
 			            if ( !urlsVisited.contains( element[0] ) ){
 			            	 SharedUrlPool.offer( element );
 			            }
 			        }
-			        urlCount++;
+			        
 		            urlsVisited.add(this.url); 
+		            urlCount = urlsVisited.size();
+		            //System.out.println(urlsVisited.size());
 				}
 			} else {
 				try {
@@ -108,6 +114,10 @@ public class WebCrawler implements Runnable {
 					e.getMessage();
 				}
 			}
+		}
+		exit++;
+		if ( exit == 5 ){
+			urlCount = 100;
 		}
 	}//end run
 }

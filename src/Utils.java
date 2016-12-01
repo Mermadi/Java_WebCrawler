@@ -40,11 +40,24 @@ public class Utils {
 	}
 	
 	// insert into database
-	public static boolean writeToDatabase ( Connection conn, String url, String link, String layer ) {
+	public static boolean writeToDatabase ( Connection conn, String url, String elem, String layer, String tag ) {
 	    boolean success = false;
 		try {
 			Statement stmt = conn.createStatement();
-			stmt.executeUpdate("INSERT INTO scraped " + "VALUES ('"+ url +"','"+ link +"','"+ layer +"')");
+			switch(tag){
+				case "media":
+					stmt.executeUpdate("INSERT INTO scraped (url, media, layer) " 
+				    + "VALUES ('"+ url +"','"+ elem +"','"+ layer +"')");
+					break;
+				case "imports":
+					stmt.executeUpdate("INSERT INTO scraped (url, imports, layer) " 
+				    + "VALUES ('"+ url +"','"+ elem +"','"+ layer +"')");					
+					break;
+				case "links":
+					stmt.executeUpdate("INSERT INTO scraped (url, links, layer) " 
+				    + "VALUES ('"+ url +"','"+ elem +"','"+ layer +"')");	
+					break;
+			}		
 		    success = true;
 		} catch (SQLException e) {
 			e.printStackTrace();	
@@ -65,12 +78,24 @@ public class Utils {
 	}
 	
 	// search database returns ResultSet
-	public static ResultSet search ( Connection conn, String url) {
+	public static ResultSet search ( Connection conn, String url, String tag) {
 		ResultSet rs = null;
 		try {
+			String linksSQL = "SELECT links FROM scraped WHERE links IS NOT NULL AND links <> '' AND url = '"+ url +"'";
+			String mediaSQL = "SELECT media FROM scraped WHERE media IS NOT NULL AND media <> '' AND url = '"+ url +"'";
+			String importsSQL = "SELECT imports FROM scraped WHERE imports IS NOT NULL AND imports <> '' AND url = '"+ url +"'";
 			Statement stmt = conn.createStatement();
-			String sql = "SELECT url,links,layer FROM scraped WHERE url = '"+ url +"'";
-		    rs = stmt.executeQuery(sql);
+			switch(tag){
+			case "media":
+			    rs = stmt.executeQuery(mediaSQL);
+				break;
+			case "imports":
+			    rs = stmt.executeQuery(importsSQL);
+				break;
+			case "links":
+			    rs = stmt.executeQuery(linksSQL);
+				break;
+			}
 		} catch (SQLException e) {
 			e.printStackTrace();	
 		}
@@ -84,7 +109,6 @@ public class Utils {
 			Statement stmt = conn.createStatement();
 			String sql = "SELECT url FROM scraped";
 		    ResultSet rs = stmt.executeQuery( sql );
-
 		    while( rs.next() ) {
 		        String result = rs.getString(1);
 		        if (result != null) {

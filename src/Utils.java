@@ -2,6 +2,11 @@ import java.sql.*;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+
+import com.mysql.jdbc.MysqlDataTruncation;
+
 public class Utils {
 
 	private static final String JDBC_DRIVER = "com.mysql.jdbc.Driver";  
@@ -9,7 +14,25 @@ public class Utils {
 	private static final String USER = "agodinez";
 	private static final String PASS = "SecretPassword";
 	static int numConnections = 0;
+	@SuppressWarnings("unused")
+	private static Document doc;
 
+	// check if connection to root url is good
+	public static boolean connectToUrl ( String url ) {
+		boolean success;
+		if ( url != null ) {
+			try {
+				doc = Jsoup.connect(url).get();
+				success = true;
+			} catch ( Exception e ) {
+				success = false;
+			}
+		 } else {
+			success = false;
+		}
+		return success;
+	}
+	
 	// format string url
 	public static String trim(String s, int width) {
 		if (s.length() > width)
@@ -59,9 +82,11 @@ public class Utils {
 					break;
 			}		
 		    success = true;
-		} catch (SQLException e) {
+		} catch ( MysqlDataTruncation e) {
+			System.out.println("skipping a super long url");
+		}catch (SQLException e) {
 			e.printStackTrace();	
-		}
+		} 
 		return success;
 	}	
 	

@@ -78,6 +78,7 @@ public class SearchDisplay {
 		btnNewButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				String url = (String) comboBox.getSelectedItem();
+				
 				ResultSet  rsLinks = Utils.search ( conn, url, "links" );
 				tableLinks.setModel(DbUtils.resultSetToTableModel(rsLinks));
 				
@@ -98,6 +99,5 @@ public class SearchDisplay {
 		JSeparator separator = new JSeparator();
 		separator.setBounds(81, 81, 731, 12);
 		frame.getContentPane().add(separator);
-		
 	}	
 }

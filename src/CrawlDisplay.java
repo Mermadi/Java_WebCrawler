@@ -48,9 +48,9 @@ public class CrawlDisplay {
 			public void actionPerformed(ActionEvent e) {		
 				createCrawlers();
 				String url = UrlsTextField.getText().trim();
-				pool.insertURL(url);
-				WebCrawler.urlCount = 1;
-				System.out.println(url +" add to queue");
+				if (!pool.insertURL(url)) {
+              	   JOptionPane.showMessageDialog(frame, "Couldn't connect to "+ url);
+				}
 				UrlsTextField.setText("");		
 			}
 		});
@@ -120,5 +120,7 @@ public class CrawlDisplay {
 	public void createCrawlers () {
 		pool = new CrawlPool ();
 		pool.initCrawlers ();
+		WebCrawler.urlCount = 1;
+		WebCrawler.exit = 0;
 	}
 }

@@ -51,7 +51,6 @@ public class CrawlDisplay {
 	        @Override
 	        public void windowClosing(java.awt.event.WindowEvent windowEvent) {
 	    		WebCrawler.urlCount = 0;
-	    		WebCrawler.exit = 0;
 	        }
 	    });
 		
@@ -98,14 +97,14 @@ public class CrawlDisplay {
 
 	}
 	
-	// updates progress bar in the background 
+	// Swing Worker Thread updates progress bar in the background 
     public class ProgressWorker extends SwingWorker<Object, Object> {
         @Override
         protected Object doInBackground() throws Exception {
         	   while ( WebCrawler.urlCount <= 120 ) {        
                    setProgress( WebCrawler.urlCount );
                    try {
-                       Thread.sleep( 500 );
+                       Thread.sleep( 10 );
                    } catch ( InterruptedException e ) {
                 	   return null;
                    }
@@ -114,6 +113,7 @@ public class CrawlDisplay {
         }
     }
     
+    // progress bar listener
     public void startProgressListener () {
 		pw.addPropertyChangeListener(new PropertyChangeListener() {
 			@Override
@@ -121,7 +121,7 @@ public class CrawlDisplay {
 				String name = evt.getPropertyName();
                 if (name.equals("progress")) {
                     int progress = (int) evt.getNewValue();
-                    System.out.println ("Progress: " + progress);
+                    System.out.println("Progress: " +progress);
                     if ( progress >= 100 ){
                  	   JOptionPane.showMessageDialog(frame, "Scrape Complete");
                  	   pool.shutdownPool();
@@ -140,6 +140,5 @@ public class CrawlDisplay {
 		pool = new CrawlPool ();
 		pool.initCrawlers ();
 		WebCrawler.urlCount = 0;
-		WebCrawler.exit = 0;
 	}
 }

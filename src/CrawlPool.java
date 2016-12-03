@@ -7,12 +7,16 @@ import java.util.concurrent.ExecutorService;
 
 public class CrawlPool {
 	
-	LinkedBlockingQueue < String [] > SharedUrlPool = new LinkedBlockingQueue< String [] >(100);
-	Set <String> urlsVisited = Collections.synchronizedSet(new HashSet<>(100));
-	final ExecutorService executor = Executors.newFixedThreadPool(5);
-	WebCrawler[] crawlers = new WebCrawler [ 6 ];
+	
+	private final int URLS_LIMIT = 100;
+	private final int CRAWLER_THREADS = 5;
+	
+	LinkedBlockingQueue < String [] > SharedUrlPool = new LinkedBlockingQueue< String [] >(URLS_LIMIT);
+	Set <String> urlsVisited = Collections.synchronizedSet(new HashSet<>(URLS_LIMIT));
+	final ExecutorService executor = Executors.newFixedThreadPool(CRAWLER_THREADS);
+	WebCrawler[] crawlers = new WebCrawler [ CRAWLER_THREADS + 1 ];
 
-	// insert single url into pool
+	// insert root url into pool
 	public boolean insertURL ( String url ){
 		String element []= {url, "0"};
 		if ( Utils.connectToUrl(url)){
@@ -25,14 +29,14 @@ public class CrawlPool {
 
 	// create 5 WebCrawler instances 
 	public void initCrawlers () {
-		for ( int count = 1; count < 6 ; count++ ) {
-			crawlers [ count ] = new WebCrawler( SharedUrlPool, "[ Crawler "+ count +" ]", urlsVisited );
+		for ( int count = 1; count <= CRAWLER_THREADS ; count++ ) {
+			crawlers [ count ] = new WebCrawler( SharedUrlPool, "[ Crawler "+ count +" ]", urlsVisited, URLS_LIMIT );
 		}	
 	}
 	
 	// execute the 5 WebCrawler instances in new threads
 	public void startCrawlers (){
-		for ( int count = 1; count < 6 ; count++ ) {
+		for ( int count = 1; count <= CRAWLER_THREADS ; count++ ) {
 			executor.execute( crawlers [ count ] );
 		}
 	}

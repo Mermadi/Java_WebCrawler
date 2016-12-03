@@ -7,17 +7,15 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class WebCrawler implements Runnable {
 	private String element [];
-	private String url,layer;
+	private String url,layer, name;
 	private Document doc;
 	private Elements links,media,imports;
 	LinkedBlockingQueue < String [] > SharedUrlPool = new LinkedBlockingQueue< String [] >(100);
-	Set<String> urlsVisited = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
-    //Set < String > urlsVisited = 	( new HashSet < String > ( 100 ) );
+	private Set <String> urlsVisited = Collections.synchronizedSet(new HashSet<>(100));
 	public static int urlCount = 1;
 	public static int exit = 0;
 	Connection conn; 
@@ -26,6 +24,7 @@ public class WebCrawler implements Runnable {
 		this.SharedUrlPool = SharedUrlPool;
 		this.urlsVisited = urlsVisited;
 		this.conn = Utils.connectDatabase(); 
+		this.name = name;
 	}
 	
 	public boolean connectToUrl ( String url ) {
@@ -49,20 +48,22 @@ public class WebCrawler implements Runnable {
 		}
 		return success;
 	}
-	
+
 	@Override
 	public void run() {
-		while ( urlsVisited.size() <= 100 ) {
+		while ( urlsVisited.size() < 100  ) {
 			if ( !SharedUrlPool.isEmpty() ) {
 				try {
 					this.element = SharedUrlPool.take();
 					this.url = this.element[0];
 					this.layer = this.element[1];
-					
+										
 				} catch ( InterruptedException e ) {
 					e.printStackTrace();
 				}
-				if ( connectToUrl( this.url ) ) {
+				
+				if ( connectToUrl( this.url ) && urlsVisited.add( this.url ) ) {
+					System.out.println(urlCount +" "+ name + " scraping " + this.url + " at layer: " + this.layer);
 					int newLayer = Integer.parseInt(this.layer) + 1;
 					Set < String > foundLinks = ( new HashSet < String > ( 300 ) );
 			        
@@ -72,33 +73,30 @@ public class WebCrawler implements Runnable {
 			            } 
 			        }
 		
-			        for ( Element link : imports ) {
-			        	Utils.writeToDatabase( conn, this.url, link.attr( "abs:href" ), ( ""+newLayer ), "imports");
+			        for ( Element imports : imports ) {
+			        	Utils.writeToDatabase( conn, this.url, imports.attr( "abs:href" ), ( ""+newLayer ), "imports");
 			        }
 		
 			        for ( Element link : links ) {
 			            String element []= { link.attr( "abs:href" ), ( ""+ newLayer ) };
-			            if ( !urlsVisited.contains( element[0]) && foundLinks.add(element[0] ) ){
+		        		if ( urlsVisited.contains(element[0]) == false && foundLinks.add(element[0] ) ){
 			            	Utils.writeToDatabase( conn, this.url, element[0], element[1], "links");
-			            	SharedUrlPool.offer( element );
-			            }
+		                	SharedUrlPool.offer( element );
+		                }
 			        }
-			        urlsVisited.add( this.url );
-		            urlCount = urlsVisited.size();
-		            System.out.println(urlCount);
+			        
+			        if ( urlCount < 100 ){
+				       urlCount = urlsVisited.size();
+			        } 
 				}
 			} else {
 				try {
-					Thread.sleep( 2000 );
+					Thread.sleep( 1000 );
 				} catch ( InterruptedException e ) {
 					e.getMessage();
 				}
 			}
 		}
 		Utils.closeDatabaseConnection ( conn );
-		exit++;
-		if ( exit == 5 ){
-			urlCount = 100;
-		}
 	}
 }

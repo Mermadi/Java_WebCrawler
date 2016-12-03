@@ -8,6 +8,8 @@ import java.awt.event.ActionEvent;
 public class MainMenu {
 
 	private JFrame frame;
+	CrawlDisplay cd;
+	private boolean crawlDisplayFlag = false;
 
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
@@ -47,8 +49,13 @@ public class MainMenu {
 		JButton button = new JButton("Crawl");
 		button.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				CrawlDisplay cd = new CrawlDisplay();
-				cd.CrawlScreen();				
+				if (crawlDisplayFlag == false) {
+					cd = new CrawlDisplay();
+					cd.CrawlScreen();
+					crawlDisplayFlag = true;
+				} else {
+					cd.window.frame.setVisible(true);
+				}
 			}
 		});
 		button.setBounds(22, 37, 117, 29);

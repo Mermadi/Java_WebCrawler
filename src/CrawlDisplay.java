@@ -13,16 +13,19 @@ import javax.swing.JOptionPane;
 
 public class CrawlDisplay {
 
-	private JFrame frame;
+	JFrame frame;
 	private JTextField UrlsTextField;
 	JProgressBar progressBar;
 	CrawlPool pool;
+	ProgressWorker pw = new ProgressWorker();
+	CrawlDisplay window;
+	private static boolean progressStarted = false;
 
 	public void CrawlScreen() {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					CrawlDisplay window = new CrawlDisplay();
+					window = new CrawlDisplay();
 					window.frame.setVisible(true);
 
 				} catch (Exception e) {
@@ -34,14 +37,23 @@ public class CrawlDisplay {
 
 	public CrawlDisplay() {
 		initialize();
+
 	}
 
 	private void initialize() {
 		frame = new JFrame("Crawler");
 		frame.setBounds(100, 100, 722, 153);
-		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 		frame.getContentPane().setLayout(null);
 	    frame.setLocationRelativeTo(null);
+	    
+	    frame.addWindowListener(new java.awt.event.WindowAdapter() {
+	        @Override
+	        public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+	    		WebCrawler.urlCount = 0;
+	    		WebCrawler.exit = 0;
+	        }
+	    });
 		
 		JButton btnNewButton = new JButton("Add");
 		btnNewButton.addActionListener(new ActionListener() {
@@ -62,23 +74,9 @@ public class CrawlDisplay {
 		btnCrawl.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				pool.startCrawlers();
-				ProgressWorker pw = new ProgressWorker();
-				pw.addPropertyChangeListener(new PropertyChangeListener() {
-
-					@Override
-					public void propertyChange(PropertyChangeEvent evt) {
-						String name = evt.getPropertyName();
-                        if (name.equals("progress")) {
-                            int progress = (int) evt.getNewValue();
-                            if ( progress >= 100 ){
-                         	   JOptionPane.showMessageDialog(frame, "Scrape Complete");
-                            }
-                            progressBar.setValue(progress);
-                            progressBar.repaint();
-                        } 
-					}
-				});
-				pw.execute();
+				if ( progressStarted == false ) { 
+					startProgressListener();
+				}
 			}
 		});
 		
@@ -104,23 +102,44 @@ public class CrawlDisplay {
     public class ProgressWorker extends SwingWorker<Object, Object> {
         @Override
         protected Object doInBackground() throws Exception {
-        	   while ( WebCrawler.urlCount <= 100 ) {        
+        	   while ( WebCrawler.urlCount <= 120 ) {        
                    setProgress( WebCrawler.urlCount );
                    try {
-                       Thread.sleep( 45 );
-                   } catch ( Exception e ) {
-                       e.printStackTrace();
+                       Thread.sleep( 500 );
+                   } catch ( InterruptedException e ) {
+                	   return null;
                    }
                }
             return null;
         }
     }
-	
+    
+    public void startProgressListener () {
+		pw.addPropertyChangeListener(new PropertyChangeListener() {
+			@Override
+			public void propertyChange(PropertyChangeEvent evt) {
+				String name = evt.getPropertyName();
+                if (name.equals("progress")) {
+                    int progress = (int) evt.getNewValue();
+                    System.out.println ("Progress: " + progress);
+                    if ( progress >= 100 ){
+                 	   JOptionPane.showMessageDialog(frame, "Scrape Complete");
+                 	   pool.shutdownPool();
+                    }
+                    progressBar.setValue(progress);
+                    progressBar.repaint();
+                } 
+			}
+		});
+		pw.execute();
+		progressStarted = true;
+    }
+    
 	// create pool of crawlers
 	public void createCrawlers () {
 		pool = new CrawlPool ();
 		pool.initCrawlers ();
-		WebCrawler.urlCount = 1;
+		WebCrawler.urlCount = 0;
 		WebCrawler.exit = 0;
 	}
 }

@@ -6,6 +6,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
 import com.mysql.jdbc.MysqlDataTruncation;
+import com.mysql.jdbc.exceptions.jdbc4.MySQLSyntaxErrorException;
 
 public class Utils {
 
@@ -82,8 +83,12 @@ public class Utils {
 					break;
 			}		
 		    success = true;
+		    
 		} catch ( MysqlDataTruncation e) {
 			System.out.println("skipping a super long url");
+
+		} catch ( MySQLSyntaxErrorException e) {
+			System.out.println("skipping malformed link");
 		}catch (SQLException e) {
 			e.printStackTrace();	
 		} 
@@ -123,7 +128,7 @@ public class Utils {
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();	
-		}
+		} 
 		return rs;
 	}
 	

@@ -110,5 +110,10 @@ public class WebCrawler implements Runnable {
 			}
 		}
 		Utils.closeDatabaseConnection ( conn );
+		 try {
+			 Thread.sleep( 5000 );
+		 } catch ( InterruptedException e ) {
+			 e.getMessage();
+		 }
 	}
 }

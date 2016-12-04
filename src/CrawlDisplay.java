@@ -1,4 +1,5 @@
 import java.awt.EventQueue;
+import java.awt.Toolkit;
 import javax.swing.JFrame;
 import javax.swing.JButton;
 import javax.swing.JTextField;
@@ -11,15 +12,15 @@ import javax.swing.JProgressBar;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 
-public class CrawlDisplay {
+public class CrawlDisplay implements PropertyChangeListener, ActionListener {
 
 	JFrame frame;
 	private JTextField UrlsTextField;
 	JProgressBar progressBar;
 	CrawlPool pool;
-	ProgressWorker pw = new ProgressWorker();
 	CrawlDisplay window;
-	private static boolean progressStarted = false;
+	private JButton btnCrawl;
+	private ProgressWorker pw;
 
 	public void CrawlScreen() {
 		EventQueue.invokeLater(new Runnable() {
@@ -46,13 +47,6 @@ public class CrawlDisplay {
 		frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 		frame.getContentPane().setLayout(null);
 	    frame.setLocationRelativeTo(null);
-	    
-	    frame.addWindowListener(new java.awt.event.WindowAdapter() {
-	        @Override
-	        public void windowClosing(java.awt.event.WindowEvent windowEvent) {
-	    		WebCrawler.urlCount = 0;
-	        }
-	    });
 		
 		JButton btnNewButton = new JButton("Add");
 		btnNewButton.addActionListener(new ActionListener() {
@@ -61,23 +55,18 @@ public class CrawlDisplay {
 				String url = UrlsTextField.getText().trim();
 				if (!pool.insertURL(url)) {
               	   JOptionPane.showMessageDialog(frame, "Couldn't connect to "+ url);
+				} else {
+	               JOptionPane.showMessageDialog(frame, "Added "+ url);
 				}
-				UrlsTextField.setText("");		
 			}
 		});
 		
 		btnNewButton.setBounds(552, 29, 117, 30);
 		frame.getContentPane().add(btnNewButton);
-		
-		JButton btnCrawl = new JButton("Crawl");
-		btnCrawl.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				pool.startCrawlers();
-				if ( progressStarted == false ) { 
-					startProgressListener();
-				}
-			}
-		});
+		btnCrawl = new JButton("Crawl");
+		btnCrawl.setActionCommand("crawl");
+		btnCrawl.addActionListener(this);
+
 		
 		btnCrawl.setBounds(552, 70, 117, 30);
 		frame.getContentPane().add(btnCrawl);
@@ -97,48 +86,55 @@ public class CrawlDisplay {
 
 	}
 	
-	// Swing Worker Thread updates progress bar in the background 
-    public class ProgressWorker extends SwingWorker<Object, Object> {
-        @Override
-        protected Object doInBackground() throws Exception {
-        	   while ( WebCrawler.urlCount <= 120 ) {        
-                   setProgress( WebCrawler.urlCount );
-                   try {
-                       Thread.sleep( 10 );
-                   } catch ( InterruptedException e ) {
-                	   return null;
-                   }
-               }
-            return null;
-        }
-    }
+	class ProgressWorker extends SwingWorker<Void, Void> {
+	    
+	     //Main task. Executed in background thread.
+	    @Override
+	    public Void doInBackground() {
+	      // Initialize progress property.
+	      WebCrawler.urlCount = 0 ;
+	      while (WebCrawler.urlCount < 100) {
+	        try {
+	          Thread.sleep(500);
+	        } catch (InterruptedException ignore) {
+	        }
+	        setProgress(WebCrawler.urlCount);
+	      }
+	      return null;
+	    }
+
+	     //Executed in event dispatching thread
+	    @Override
+	    public void done() {
+	      Toolkit.getDefaultToolkit().beep();
+	      btnCrawl.setEnabled(true);
+    	  JOptionPane.showMessageDialog(frame, "Scrape Complete");
+    	  setProgress(0);
+    	  pool.shutdownPool();
+		  UrlsTextField.setText("");		
+	    }
+	  }
     
-    // progress bar listener
-    public void startProgressListener () {
-		pw.addPropertyChangeListener(new PropertyChangeListener() {
-			@Override
-			public void propertyChange(PropertyChangeEvent evt) {
-				String name = evt.getPropertyName();
-                if (name.equals("progress")) {
-                    int progress = (int) evt.getNewValue();
-                    System.out.println("Progress: " +progress);
-                    if ( progress >= 100 ){
-                 	   JOptionPane.showMessageDialog(frame, "Scrape Complete");
-                 	   pool.shutdownPool();
-                    }
-                    progressBar.setValue(progress);
-                    progressBar.repaint();
-                } 
-			}
-		});
-		pw.execute();
-		progressStarted = true;
-    }
-    
+	  public void actionPerformed(ActionEvent evt) {
+		  	btnCrawl.setEnabled(false);
+		  	pool.startCrawlers();
+		    // Instances of javax.swing.SwingWorker are not reusuable, so we create new instances as needed.
+		    pw = new ProgressWorker();
+		    pw.addPropertyChangeListener(this);
+		    pw.execute();
+	  }
+
+	   // Invoked when task's progress property changes.
+	  public void propertyChange(PropertyChangeEvent evt) {
+	    if ("progress" == evt.getPropertyName()) {
+	      int progress = (Integer) evt.getNewValue();
+	      progressBar.setValue(progress);
+	    }
+	  }
+	
 	// create pool of crawlers
 	public void createCrawlers () {
 		pool = new CrawlPool ();
 		pool.initCrawlers ();
-		WebCrawler.urlCount = 0;
 	}
 }

@@ -14,19 +14,19 @@ public class WebCrawler implements Runnable {
 	private String url,layer, name;
 	private Document doc;
 	private Elements links,media,imports;
+	public static int urlCount;
+    private int URLS_LIMIT;
 	LinkedBlockingQueue < String [] > SharedUrlPool = new LinkedBlockingQueue< String [] >(100);
 	private Set <String> urlsVisited = Collections.synchronizedSet(new HashSet<>(100));
-	public static int urlCount = 1;
-    private int URLS_LIMIT = 100;
 	Connection conn; 
 
 	// constructor
 	public WebCrawler ( LinkedBlockingQueue < String [] > SharedUrlPool, String name, Set < String > urlsVisited, int URLS_LIMIT) {
+		this.URLS_LIMIT = URLS_LIMIT;
 		this.SharedUrlPool = SharedUrlPool;
 		this.urlsVisited = urlsVisited;
 		this.conn = Utils.connectDatabase(); 
 		this.name = name;
-		this.URLS_LIMIT = URLS_LIMIT;
 	}
 	
 	// check if connection to url is good and grab html doc with elements
@@ -52,35 +52,32 @@ public class WebCrawler implements Runnable {
 		return success;
 	}
 	
-	// update static count variable (tracked by progress bar swing worker thread
-	public void updateCount () {
-	  urlCount = urlsVisited.size(); 
-	   if (urlCount == 100 ){
-		   for (int i = 0; i < 100; i++){
-		       urlCount = urlsVisited.size(); 
-		   }
-	   }
+	public boolean checkUrl ( String url ) {
+		boolean flag = false;
+		if ( connectToUrl( url ) && urlsVisited.add(url) && urlsVisited.size() <= URLS_LIMIT ) {
+			flag = true;
+		}
+		return flag;
 	}
 
 	// main thread body
 	@Override
 	public void run() {
 		while ( urlsVisited.size() < URLS_LIMIT  ) {
-			 if ( !SharedUrlPool.isEmpty() ) {
 				try {
 					this.element = SharedUrlPool.take(); //wait here if no elements are in queue
 					this.url = this.element[0];
 					this.layer = this.element[1];
 										
 				} catch ( InterruptedException e ) {
-					e.printStackTrace();
+					e.getMessage();
 				}
 				
-				// before scraping grabbed element ensure these conditions are met
-				if ( connectToUrl( this.url ) && urlsVisited.add(this.url) && urlsVisited.size() <= URLS_LIMIT  ) {
+				// ensure connection to url is good and that it hasn't been scraped already
+				if ( checkUrl ( this.url ) ) {
 					System.out.println(urlsVisited.size() +" "+ name + " scraping " + this.url + " at layer: " + this.layer);
 					int newLayer = Integer.parseInt(this.layer) + 1;
-					Set < String > foundLinks = ( new HashSet < String > ( 300 ) );
+					Set < String > foundLinks = ( new HashSet < String > ( 300 ) ); //exclude duplicate links on same page
 			        
 			        for ( Element src : media ) {
 			            if ( src.tagName().equals( "img" ) ) {
@@ -91,29 +88,17 @@ public class WebCrawler implements Runnable {
 			        for ( Element imports : imports ) {
 			        	Utils.writeToDatabase( conn, this.url, imports.attr( "abs:href" ), ( ""+newLayer ), "imports");
 			        }
-		
-			        for ( Element link : links ) {
+			        
+			        for ( Element link : links) {
 			            String element []= { link.attr( "abs:href" ), ( ""+ newLayer ) };
 			            if ( (!urlsVisited.contains(element[0])) && foundLinks.add(element[0] ) ){
 			            	Utils.writeToDatabase( conn, this.url, element[0], element[1], "links");
 		                	SharedUrlPool.offer( element ); //add to tail of shared queue
 		                }
 			        }
-			        updateCount ();
+			  	  urlCount = urlsVisited.size(); //adjust urlCount, tracked by progress bar in event dispatch thread 
 				}
-			 } else {
-				 try {
-					 Thread.sleep( 100 );
-				 } catch ( InterruptedException e ) {
-					 e.getMessage();
-				 }
-			}
 		}
-		Utils.closeDatabaseConnection ( conn );
-		 try {
-			 Thread.sleep( 5000 );
-		 } catch ( InterruptedException e ) {
-			 e.getMessage();
-		 }
+		Utils.closeDatabaseConnection ( conn ); //thread is exiting so close db connection
 	}
 }

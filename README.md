@@ -1,6 +1,6 @@
 ## Requirements
 
-1. Java 8
+1. Java 7 or greater
 2. MySQL
 3. Add JARs listed below to your build path
 	- jsoup-1.10.1.jar ( HTML Parser )
